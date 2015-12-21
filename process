@@ -1,0 +1,21 @@
+Attrition - Yes/No
+EmpAttr - Using RandomForest to predict Attrition - Bad specificity and precision (too many false positives)
+EmpAttrNoOvertime - Removed instances with overtime - Still too many false positives - no accuracy improvement
+EmpAttrC50 - Used C50 package - much better precision, okay accuracy
+EmpAttrC50SelectedFeatures - Still using C50 package but with only selected features - no improvement - so we're good with C50
+
+TenureGroup 
+EmpAttrTenure - ...WA_Fn-UseC_-HR-Employee-Attrition-Tenure-FeatureEngineering-ForCSV.csv where I removed the Employees who are still in the company but less than 7 years (7 was the average) - Average YearAtCompany was 7; Removed all rows that: Attrition = No and YearsAtCompany < 7
+- ????Removed columns: Attrition, TotalWorkingYears, YearsInCurrentRole	YearsSinceLastPromotion	YearsWithCurrManager
+ (these columns might be dependent on YearsAtCompany) JobLevel MonthlyIncome	MonthlyRate HourlyRate 
+ StandardHours StockOptionLevel Over18 DailyRate Age
+- Statistic summary of YearsAtCompany to form the groups:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   1.00    7.00    9.00   10.38   13.00   40.00 
+- G1 = < 7
+- G2 = 7 to 10
+- G3 = > 10
+=IF(R2>10,"TG3",IF(R2>7,"TG2","TG1"))
+- Feature Engineering - YSLP/TWY TICR/TWY YWCM/TWY TWY/NCW (Years per company)
+
+TenureGroup using C50
