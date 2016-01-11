@@ -205,5 +205,32 @@ varImpPlot(randomForestModel, type=1, pch=19,col=1,cex=1.0, main="")
 ## We need to get more precise - one way to do that is to use a more precise dataset
 ## False positive 72% of the time still - Not precise at all - need a better model or more data
 
+# Clustering with mclust
+mydata <- read.csv("WA_Fn-UseC_-HR-Employee-Attrition-Updated.csv", header = TRUE)
+mydata <- na.omit(mydata) # listwise deletion of missing
+mydata.orig = mydata #save orig data copy
+mydata <- scale(mydata) # standardize variables
 
+#Ward Hierarchical Clustering
+d <- dist(mydata, method = "euclidean") # distance matrix
+fit <- hclust(d, method="ward")
+plot(fit) # display dendogram
 
+k1 = 2 # eyeball the no. of cluster
+# cut tree into k1 clusters
+groups <- cutree(fit, k=k1)
+# draw dendogram with red borders around the k1 clusters
+rect.hclust(fit, k=k1, border="red")
+
+# Use optimal no. of clusters in k-means #
+k1=2
+# K-Means Cluster Analysis
+fit <means(mydata, k1) # k1 cluster solution
+# get cl- kuster means
+aggregate(mydata.orig,by=list(fit$cluster),FUN=mean)
+# append cluster assignment
+mydata1 <- data.frame(mydata.orig, fit$cluster)
+# Cluster Plot against 1st 2 principal components
+# vary parameters for most readable graph
+library(cluster)
+clusplot(mydata, fit$cluster, color=TRUE, shade=TRUE,labels=2, lines=0)

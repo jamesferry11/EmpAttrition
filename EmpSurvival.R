@@ -10,6 +10,7 @@ time <- YearsAtCompany
 event <- Attrition
 x <- cbind(OverTime,Age,MonthlyIncome,JobRole,BusinessTravel,DistanceFromHome,JobInvolvement)
 group <- OverTime
+survival <- Surv(time,event)
 
 # Summary Statistics
 summary(time)
@@ -26,3 +27,18 @@ plot(kmsurvival, xlab="Time",ylab="Survival Probability")
 kmsurvival <- survfit(Surv(time,event) ~group)
 summary(kmsurvival)
 plot(kmsurvival, xlab="Time",ylab="Survival Probability")
+
+survdiff(survival ~ group, data = alldata)
+
+#Coxph
+coxph <- coxph(survival ~ OverTime +
+                 Age +
+                 MonthlyIncome +
+                 JobRole +
+                 BusinessTravel,DistanceFromHome,JobInvolvement, data = alldata)
+summary(coxph)
+coxph
+
+cox.zph(coxph)
+
+
