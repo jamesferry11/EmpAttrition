@@ -54,7 +54,7 @@ library(scales)
 # Form Hypothesis - Are there "stories" we can tell from the data?
 ## Hypothesis: Low JobSatisfaction leads to attrition
 ggplot(train, aes(x = JobSatisfaction, fill = Attrition)) +
-  geom_histogram(width = 0.5) +
+  stat_count(width = 0.5) +
   xlab("Job Satisfaction") + 
   ylab("Count") +
   labs(fill = "Attrition")
@@ -68,7 +68,7 @@ ggplot(train, aes(x = EnvironmentSatisfaction, fill = Attrition)) +
 
 ## Hypothesis: Low WorkLifeBalance leads to attrition
 ggplot(train, aes(x = WorkLifeBalance, fill = Attrition)) +
-  geom_histogram(width = 0.5) +
+  stat_count(width = 0.5) +
   xlab("Work Life Balance") + 
   ylab("Count") +
   labs(fill = "Attrition")
@@ -84,7 +84,7 @@ ggplot(train, aes(x = MaritalStatus, fill = Attrition)) +
 
 ## Hypothesis: Some JobRole have high attrition rates
 ggplot(train, aes(x = JobRole, fill = Attrition)) +
-  geom_histogram(width = 0.5) +
+  stat_count(width = 0.5) +
   xlab("Job Role") + 
   ylab("Count") +
   labs(fill = "Attrition")
@@ -175,7 +175,7 @@ library(rpart)
 library(caret)
 
 ## Random Forest Model
-randomForestModel <- randomForest(Attrition~Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + Over18 + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager,data=train,ntree=500,mtry=5, importance=TRUE) 
+randomForestModel <- randomForest(Attrition~Age + BusinessTravel + DailyRate + Department + DistanceFromHome + Education + EducationField + EnvironmentSatisfaction + Gender + HourlyRate + JobInvolvement + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + MonthlyRate + NumCompaniesWorked + Over18 + OverTime + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StandardHours + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager,data=train,ntree=100,mtry=5, importance=TRUE) 
 print(randomForestModel)
 ## False positive 84% of the time still - Not precise at all - need a better model or more data
 
@@ -234,3 +234,66 @@ mydata1 <- data.frame(mydata.orig, fit$cluster)
 # vary parameters for most readable graph
 library(cluster)
 clusplot(mydata, fit$cluster, color=TRUE, shade=TRUE,labels=2, lines=0)
+
+#Multivariate Analysis - PCA and LDA
+#REFERENCE: http://little-book-of-r-for-multivariate-analysis.readthedocs.org/en/latest/src/multivariateanalysis.html
+library(car)
+
+#Exporting (in case you need it)
+#library(xlsx)
+#write.xlsx(train, "c:/empattrtrain.xlsx")
+
+#standard deviation to determine if we need to scale
+sapply(train, sd)
+
+
+
+train.numericonly <- design.matrix[,unlist(lapply(design.matrix,is.numeric))]
+#get the most highly correlated variables
+mosthighlycorrelated <- function(mydataframe,numtoreport)
+{
+  # find the correlations
+  cormatrix <- cor(mydataframe)
+  # set the correlations on the diagonal or lower triangle to zero,
+  # so they will not be reported as the highest ones:
+  diag(cormatrix) <- 0
+  cormatrix[lower.tri(cormatrix)] <- 0
+  # flatten the matrix into a dataframe for easy sorting
+  fm <- as.data.frame(as.table(cormatrix))
+  # assign human-friendly names
+  names(fm) <- c("First.Variable", "Second.Variable","Correlation")
+  # sort and print the top n correlations
+  head(fm[order(abs(fm$Correlation),decreasing=T),],n=numtoreport)
+}
+mosthighlycorrelated(train.numericonly, 5)
+
+#scale the data of numeric columns
+design.matrix <- train.numericonly 
+numeric.columns <- design.matrix[,unlist(lapply(design.matrix,is.numeric))]
+scaled.numeric.columns <- scale(numeric.columns)
+design.matrix[,unlist(lapply(design.matrix,is.numeric))] <- scaled.numeric.columns 
+train.numericonly.scaled <- design.matrix 
+train.numericonly.scaled <- train.numericonly.scaled[,colSums(is.na(train.numericonly.scaled))<nrow(train.numericonly.scaled)]
+
+
+# PCA
+train.pca <- prcomp(train.numericonly.scaled)
+sum((train.pca$sdev)^2)
+
+#How many principal components to retain
+summary(train.pca)
+#one way to determine how many p components
+screeplot(train.pca, type="lines")
+#another way to determine how many p components
+(train.pca$sdev)^2
+
+#PC loadings - Used to determine which variables belong to a component
+train.pca$rotation[,1]
+train.pca$rotation[,2]
+train.pca$rotation[,3]
+train.pca$rotation[,4]
+train.pca$rotation[,5]
+
+#Factor Analysis
+train.fa1 <- factanal(train.numericonly.scaled, factors = 6, rotation = "varimax")
+train.fa1
